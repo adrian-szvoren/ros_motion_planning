@@ -5,15 +5,15 @@ Docker is a powerful tool for managing and deploying applications in a consisten
 
 First cd to the docker directory
 ```sh
-cd docker/<distro>
+cd docker/noetic
 ```
 Then build the image using docker file
 ```sh
-docker build -t ros-motion-planning:<distro> --no-cache -f ./Dockerfile ../../
+docker build -t ros-motion-planning:noetic --no-cache -f ./Dockerfile ../../
 ```
 Finally run the container
 ```sh
-docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" --name=ros-motion-planning-<distro> ros-motion-planning:<distro> /bin/bash
+docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" --name=ros-motion-planning-noetic ros-motion-planning:noetic /bin/bash
 ```
 Here \<distro> refers to the specific ROS distributions, i.e., `kinetic`, `melodic`, `noetic`.
 

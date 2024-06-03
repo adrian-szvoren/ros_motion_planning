@@ -4,6 +4,7 @@ FROM osrf/ros:noetic-desktop-full
 # Set the working directory
 WORKDIR /project
 
+# RUN sed -i 's/archive.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 # Install additional dependencies if needed
 RUN apt-get update \
     && apt-get -y --no-install-recommends install \
@@ -31,5 +32,10 @@ RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 # Copy the project into the container
 COPY . /project
 
+# Install osqp and osqposqp-eigen
+RUN /project/scripts/install_osqp.sh
+
+ENV CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH}:/project/packages/osqp/include"
+
 # catkin build
-RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin_make'
+RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin_make;'

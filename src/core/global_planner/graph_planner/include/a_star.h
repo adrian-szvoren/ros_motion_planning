@@ -17,6 +17,8 @@
 #ifndef A_STAR_H
 #define A_STAR_H
 
+#include <ros/ros.h>
+
 #include "global_planner.h"
 
 namespace global_planner

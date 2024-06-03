@@ -89,6 +89,13 @@ bool AStar::plan(const unsigned char* global_costmap, const Node& start, const N
     if (current == goal)
     {
       path = _convertClosedListToPath(closed_list, start, goal);
+
+      std::stringstream ss;
+      ss << "PATH: ";
+      std::copy(path.begin(), path.end(), std::ostream_iterator<Node&>(ss, " "));
+      ss << std::endl;
+      ROS_INFO_STREAM(ss.str());
+
       return true;
     }
 

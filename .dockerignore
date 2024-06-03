@@ -3,6 +3,7 @@
 !assets
 !docker
 !docs
+!packages
 !scripts
 !src
 !Doxyfile

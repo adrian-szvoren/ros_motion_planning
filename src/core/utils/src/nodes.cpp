@@ -16,6 +16,9 @@
  */
 #include "nodes.h"
 
+#include <iostream>
+#include <string>
+
 /**
  * @brief Constructor for Node class
  * @param x   x value
@@ -77,6 +80,11 @@ bool Node::operator!=(const Node& n) const
 {
   return !operator==(n);
 }
+
+std::ostream& operator<<(std::ostream& outs, const Node& n)
+{
+  return outs << "(" << n.x_ << "," << n.y_ << ")";
+};
 
 /**
  * @brief Get permissible motion

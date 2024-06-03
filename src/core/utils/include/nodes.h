@@ -69,6 +69,8 @@ public:
    */
   bool operator!=(const Node& n) const;
 
+  friend std::ostream& operator<<(std::ostream& outs, const Node& n);
+
   /**
    * @brief Get permissible motion
    * @return  Node vector of permissible motions
