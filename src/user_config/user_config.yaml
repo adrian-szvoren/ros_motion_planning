@@ -1,6 +1,7 @@
 map: "warehouse"
 world: "warehouse"
 rviz_file: "sim_env.rviz"
+debug: "true"
 
 robots_config:
   - robot1_type: "turtlebot3_waffle"

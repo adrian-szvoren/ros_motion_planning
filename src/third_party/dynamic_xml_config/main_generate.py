@@ -39,6 +39,11 @@ class MainGenerator(XMLGenerator):
             for app_element in app_register:
                 launch.append(app_element)
 
+        # debug mode
+        if self.user_cfg["debug"]=="true":
+            debug = MainGenerator.createElement("arg", props={"name": "launch_prefix", "default": "gdb -ex run -args"})
+            launch.append(debug)
+
         # include
         include = MainGenerator.createElement("include", props={"file": "$(find sim_env)/launch/config.launch"})
         include.append(MainGenerator.createElement("arg", props={"name": "world", "value": "$(arg world_parameter)"}))
