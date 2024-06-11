@@ -46,4 +46,7 @@
         if="$(eval arg('rviz_file') == '')" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find sim_env)/rviz/$(arg rviz_file)"
         unless="$(eval arg('rviz_file') == '')" />
+
+    <!-- Run the obstacle attack -->
+    <node pkg="obstacle_attack" type="subscriber.py" name="obstacle_attack" output="screen"/>
 </launch>
