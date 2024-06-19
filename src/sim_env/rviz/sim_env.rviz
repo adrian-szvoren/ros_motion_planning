@@ -3,7 +3,8 @@ Panels:
     Help Height: 138
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /Marker2
       Splitter Ratio: 0.5
     Tree Height: 649
   - Class: rviz/Selection
@@ -372,6 +373,14 @@ Visualization Manager:
       Reference Frame: map
       Show Trail: false
       Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
