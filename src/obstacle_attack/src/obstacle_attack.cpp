@@ -1,33 +1,34 @@
-#include "ros/ros.h"
-#include "nav_msgs/Path.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "visualization_msgs/Marker.h"
+#include <ros/ros.h>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 
-// Placeholder function for the pathfinding algorithm
-nav_msgs::Path findPath(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, const std::vector<geometry_msgs::Point>& obstacles)
+#include <graph_planner/graph_planner.h>
+
+geometry_msgs::PoseStamped last_goal;
+ros::Publisher marker_pub;
+
+bool isSameGoal(const geometry_msgs::PoseStamped& goal1, const geometry_msgs::PoseStamped& goal2)
 {
-    // This function should be implemented to find a path given the start, goal, and obstacles.
-    nav_msgs::Path path;
-    // Dummy implementation returning an empty path
-    return path;
+    const double epsilon = 1e-6;
+    return std::fabs(goal1.pose.position.x - goal2.pose.position.x) < epsilon &&
+           std::fabs(goal1.pose.position.y - goal2.pose.position.y) < epsilon;
 }
 
-ros::Publisher marker_pub;
+double calculatePathLength(const std::vector<geometry_msgs::PoseStamped>& path)
+{
+    double path_length = 0.0;
+    for (size_t j = 1; j < path.size(); ++j)
+    {
+        double dx = path[j].pose.position.x - path[j-1].pose.position.x;
+        double dy = path[j].pose.position.y - path[j-1].pose.position.y;
+        path_length += std::sqrt(dx * dx + dy * dy);
+    }
+    return path_length;
+}
 
 void pathCallback(const nav_msgs::Path::ConstPtr& msg)
 {
-    ROS_INFO("Received a new path with %lu poses", msg->poses.size());
-
-    // // Print the actual path
-    // for (size_t i = 0; i < msg->poses.size(); ++i)
-    // {
-    //     ROS_INFO("Pose %lu: [x: %f, y: %f, z: %f]", 
-    //              i, 
-    //              msg->poses[i].pose.position.x, 
-    //              msg->poses[i].pose.position.y, 
-    //              msg->poses[i].pose.position.z);
-    // }
-
     if (msg->poses.empty())
     {
         ROS_WARN("Received path is empty.");
@@ -37,35 +38,55 @@ void pathCallback(const nav_msgs::Path::ConstPtr& msg)
     geometry_msgs::PoseStamped start = msg->poses.front();
     geometry_msgs::PoseStamped goal = msg->poses.back();
 
-    // Iterate through the path to add obstacles and find the longest resulting path
-    std::vector<geometry_msgs::Point> best_obstacles;
-    double max_path_length = 0.0;
-
-    for (size_t i = 0; i < msg->poses.size(); i += 5)
+    if (isSameGoal(goal, last_goal))
     {
-        std::vector<geometry_msgs::Point> obstacles;
+        // ROS_WARN("Callback already called for the current goal. Skipping further execution.");
+        return;
+    }
+
+    ROS_INFO("Received a new path with %lu poses", msg->poses.size());
+
+    // Print the actual path
+    for (size_t i = 0; i < msg->poses.size(); ++i)
+    {
+        ROS_INFO("Pose %lu: [x: %f, y: %f]",
+                 i, 
+                 msg->poses[i].pose.position.x, 
+                 msg->poses[i].pose.position.y);
+    }
+
+    // Calculate the current path length
+    double default_path_length = calculatePathLength(msg->poses);
+
+    GraphPlanner planner;
+    std::vector<geometry_msgs::PoseStamped> path;
+
+    // Iterate through the path to iterate obstacles and find the longest resulting path
+    geometry_msgs::Point best_obstacle;
+    double max_path_length = default_path_length;
+
+    for (size_t i = 0; i < msg->poses.size(); ++i)
+    {
         geometry_msgs::Point obstacle;
         obstacle.x = msg->poses[i].pose.position.x;
         obstacle.y = msg->poses[i].pose.position.y;
         obstacle.z = msg->poses[i].pose.position.z;
-        obstacles.push_back(obstacle);
 
-        // Find the path with this obstacle
-        nav_msgs::Path path = findPath(start, goal, obstacles);
+        // Find the path with this obstacle using A* algorithm
+        bool success = planner.makePlan(start, goal, path);
+
+        if (!success) {
+            ROS_WARN("The path finding algorithm failed to find a path.");
+            continue;
+        }
 
         // Calculate the path length
-        double path_length = 0.0;
-        for (size_t j = 1; j < path.poses.size(); ++j)
-        {
-            double dx = path.poses[j].pose.position.x - path.poses[j-1].pose.position.x;
-            double dy = path.poses[j].pose.position.y - path.poses[j-1].pose.position.y;
-            path_length += std::sqrt(dx * dx + dy * dy);
-        }
+        double path_length = calculatePathLength(path);
 
         if (path_length > max_path_length)
         {
             max_path_length = path_length;
-            best_obstacles = obstacles;
+            best_obstacle = obstacle;
         }
     }
 
@@ -90,11 +111,14 @@ void pathCallback(const nav_msgs::Path::ConstPtr& msg)
     marker.color.b = 0.0;
     marker.color.a = 1.0;
 
-    // Add the best obstacles to the marker
-    marker.points = best_obstacles;
+    // Add the best obstacle to the marker
+    marker.pose.position = best_obstacle;
 
     // Publish the marker
     marker_pub.publish(marker);
+
+    // Update the last goal and set the flag to true
+    last_goal = goal;
 }
 
 int main(int argc, char **argv)

@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
   visualization_msgs
+  graph_planner
 )
 
 ## System dependencies are found with CMake's conventions
@@ -105,10 +106,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES obstacle_attack
-#  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+ INCLUDE_DIRS include
+ CATKIN_DEPENDS graph_planner
 )
 
 ###########
@@ -118,13 +117,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  # include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/obstacle_attack.cpp
+# src/${PROJECT_NAME}/obstacle_attack.cpp
 # )
 
 ## Add cmake target dependencies of the library
