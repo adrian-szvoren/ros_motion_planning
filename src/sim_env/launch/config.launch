@@ -48,5 +48,5 @@
         unless="$(eval arg('rviz_file') == '')" />
 
     <!-- Run the obstacle attack node -->
-    <node pkg="obstacle_attack" type="obstacle_attack" name="obstacle_attack" output="screen"/>
+    <!-- <node pkg="obstacle_attack" type="obstacle_attack" name="obstacle_attack" output="screen"/> -->
 </launch>

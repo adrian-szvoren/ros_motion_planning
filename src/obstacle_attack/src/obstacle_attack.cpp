@@ -3,7 +3,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
 
-#include <graph_planner/graph_planner.h>
+// #include <../../core/global_planner/graph_planner/include/graph_planner.h>
+// using namespace graph_planner;
 
 geometry_msgs::PoseStamped last_goal;
 ros::Publisher marker_pub;
@@ -58,64 +59,64 @@ void pathCallback(const nav_msgs::Path::ConstPtr& msg)
     // Calculate the current path length
     double default_path_length = calculatePathLength(msg->poses);
 
-    GraphPlanner planner;
-    std::vector<geometry_msgs::PoseStamped> path;
+    // GraphPlanner planner;
+    // std::vector<geometry_msgs::PoseStamped> path;
 
-    // Iterate through the path to iterate obstacles and find the longest resulting path
-    geometry_msgs::Point best_obstacle;
-    double max_path_length = default_path_length;
+    // // Iterate through the path to iterate obstacles and find the longest resulting path
+    // geometry_msgs::Point best_obstacle;
+    // double max_path_length = default_path_length;
 
-    for (size_t i = 0; i < msg->poses.size(); ++i)
-    {
-        geometry_msgs::Point obstacle;
-        obstacle.x = msg->poses[i].pose.position.x;
-        obstacle.y = msg->poses[i].pose.position.y;
-        obstacle.z = msg->poses[i].pose.position.z;
+    // for (size_t i = 0; i < msg->poses.size(); ++i)
+    // {
+    //     geometry_msgs::Point obstacle;
+    //     obstacle.x = msg->poses[i].pose.position.x;
+    //     obstacle.y = msg->poses[i].pose.position.y;
+    //     obstacle.z = msg->poses[i].pose.position.z;
 
-        // Find the path with this obstacle using A* algorithm
-        bool success = planner.makePlan(start, goal, path);
+    //     // Find the path with this obstacle using A* algorithm
+    //     bool success = planner.makePlan(start, goal, path);
 
-        if (!success) {
-            ROS_WARN("The path finding algorithm failed to find a path.");
-            continue;
-        }
+    //     if (!success) {
+    //         ROS_WARN("The path finding algorithm failed to find a path.");
+    //         continue;
+    //     }
 
-        // Calculate the path length
-        double path_length = calculatePathLength(path);
+    //     // Calculate the path length
+    //     double path_length = calculatePathLength(path);
 
-        if (path_length > max_path_length)
-        {
-            max_path_length = path_length;
-            best_obstacle = obstacle;
-        }
-    }
+    //     if (path_length > max_path_length)
+    //     {
+    //         max_path_length = path_length;
+    //         best_obstacle = obstacle;
+    //     }
+    // }
 
-    // Create a marker to visualize the best obstacles
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = ros::Time::now();
-    marker.ns = "obstacles";
-    marker.id = 0;
-    marker.type = visualization_msgs::Marker::SPHERE_LIST;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.orientation.w = 1.0;
+    // // Create a marker to visualize the best obstacles
+    // visualization_msgs::Marker marker;
+    // marker.header.frame_id = "map";
+    // marker.header.stamp = ros::Time::now();
+    // marker.ns = "obstacles";
+    // marker.id = 0;
+    // marker.type = visualization_msgs::Marker::SPHERE_LIST;
+    // marker.action = visualization_msgs::Marker::ADD;
+    // marker.pose.orientation.w = 1.0;
 
-    // Set marker scale
-    marker.scale.x = 0.2;
-    marker.scale.y = 0.2;
-    marker.scale.z = 0.2;
+    // // Set marker scale
+    // marker.scale.x = 0.2;
+    // marker.scale.y = 0.2;
+    // marker.scale.z = 0.2;
 
-    // Set marker color
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 1.0;
+    // // Set marker color
+    // marker.color.r = 1.0;
+    // marker.color.g = 0.0;
+    // marker.color.b = 0.0;
+    // marker.color.a = 1.0;
 
-    // Add the best obstacle to the marker
-    marker.pose.position = best_obstacle;
+    // // Add the best obstacle to the marker
+    // marker.pose.position = best_obstacle;
 
-    // Publish the marker
-    marker_pub.publish(marker);
+    // // Publish the marker
+    // marker_pub.publish(marker);
 
     // Update the last goal and set the flag to true
     last_goal = goal;
