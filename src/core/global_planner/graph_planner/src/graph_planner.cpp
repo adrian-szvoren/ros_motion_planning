@@ -122,6 +122,8 @@ double calculatePathLength(const std::vector<Node>& path)
 void addObstacle(costmap_2d::Costmap2D* costmap, double x, double y, double size)
 {
 	unsigned int mx, my;
+	double collision_buffer = 10;
+	size = size + 2 * collision_buffer;
 	
 	// Convert world coordinates to map coordinates
 	if(costmap->worldToMap(x, y, mx, my))
@@ -191,9 +193,6 @@ void spawnObstacleInGazebo(ros::NodeHandle& nh, costmap_2d::Costmap2D* costmap, 
 	if (spawn_client.call(spawn_srv))
 	{
 			ROS_INFO("Obstacle spawned in Gazebo successfully.");
-
-			// Add obstacle to the costmap
-			addObstacle(costmap, x, y, size);
 	}
 	else
 	{
@@ -201,94 +200,22 @@ void spawnObstacleInGazebo(ros::NodeHandle& nh, costmap_2d::Costmap2D* costmap, 
 	}
 }
 
-// // Function to run the obstacle attack
-// void GraphPlanner::obstacleAttack(std::vector<geometry_msgs::PoseStamped>& plan, Node& start, Node& goal)
-// {
-//   // Print the actual path
-//   for (size_t i = 0; i < plan.size(); ++i)
-//   {
-//       ROS_INFO("PLANNER Pose %lu: [x: %f, y: %f]",
-//                 i, 
-//                 plan[i].pose.position.x, 
-//                 plan[i].pose.position.y);
-//   }
-
-//   // Calculate the current path length
-//   double default_path_length = calculatePathLength(plan);
-
-//   // Iterate through the path to iterate obstacles and find the longest resulting path
-//   double best_obstacle_x;
-//   double best_obstacle_y;
-//   costmap_2d::Costmap2D* best_costmap;
-//   double max_path_length = default_path_length;
-
-//   for (size_t i = 20; i < plan.size(); ++i)
-//   {
-//       // Define obstacle parameters
-//       double obstacle_x = plan[i].pose.position.x;
-//       double obstacle_y = plan[i].pose.position.y;
-
-//       // Add obstacle to costmap
-//       // costmap_2d::Costmap2D* costmap_adversarial = copyCostmap(costmap_);
-//       // addObstacle(costmap_adversarial, obstacle_x, obstacle_y, obstacle_size);
-//       spawnObstacleInGazebo(nh, costmap_, "obstacle", obstacle_x, obstacle_y, obstacle_size);
-
-//       // Find the path with this obstacle
-//       // calculate path
-//       std::vector<Node> path_adv;
-//       std::vector<Node> expand_adv;
-//       std::vector<geometry_msgs::PoseStamped> plan_adv;
-
-//       bool path_found_adv = g_planner_->plan(costmap_->getCharMap(), start, goal, path_adv, expand_adv);
-
-//       if (!path_found_adv) {
-//           ROS_WARN("The path finding algorithm failed to find a path.");
-//           continue;
-//       }
-//       getPlanFromPath(path_adv, plan_adv);
-
-//       // Calculate the path length
-//       double path_length = calculatePathLength(plan_adv);
-
-//       if (path_length > max_path_length)
-//       {
-//           max_path_length = path_length;
-//           best_obstacle_x = obstacle_x;
-//           best_obstacle_y = obstacle_y;
-//           // best_costmap = costmap_adversarial;
-//       }
-
-//       ROS_INFO("Original path length: %f, adversarial path length: %f",
-//                 default_path_length, max_path_length);
-//   }
-
-//   // addObstacle(costmap_, best_obstacle_x, best_obstacle_y, obstacle_size);
-
-//   // Create a marker to visualize the best obstacles
-//   // ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
-//   // visualization_msgs::Marker obstacle_marker = createObstacleMarker(best_obstacle_x, best_obstacle_y, obstacle_size);
-//   // marker_pub.publish(obstacle_marker);
-
-//   // Spawn the obstacle in Gazebo
-//   spawnObstacleInGazebo(nh, costmap_, "obstacle", best_obstacle_x, best_obstacle_y, obstacle_size);
-// }
-
 // Function to evaluate path length with an obstacle at a specific position
 double evaluatePathWithObstacle(ros::NodeHandle& nh, costmap_2d::Costmap2D* costmap, global_planner::GlobalPlanner* planner,
 																const Node& start_node, const Node& goal_node,
 																double obstacle_x, double obstacle_y, double obstacle_size)
 {
 		// Backup original costmap
-		costmap_2d::Costmap2D costmap_backup = *costmap;
+		costmap_2d::Costmap2D* costmap_copy = new costmap_2d::Costmap2D(*costmap);
 
 		// Add obstacle to the costmap
-		addObstacle(costmap, obstacle_x, obstacle_y, obstacle_size);
+		addObstacle(costmap_copy, obstacle_x, obstacle_y, obstacle_size);
 
 		// Replan the path
 		std::vector<Node> path;
 		std::vector<Node> expand;
 		std::vector<geometry_msgs::PoseStamped> plan;
-		bool path_found = planner->plan(costmap->getCharMap(), start_node, goal_node, path, expand);
+		bool path_found = planner->plan(costmap_copy->getCharMap(), start_node, goal_node, path, expand);
 		if (path_found)
 		{
 				
@@ -298,13 +225,13 @@ double evaluatePathWithObstacle(ros::NodeHandle& nh, costmap_2d::Costmap2D* cost
 				double path_length = calculatePathLength(path);
 
 				// Restore original costmap
-				*costmap = costmap_backup;
+				// *costmap = costmap_backup;
 
 				return path_length;
 		}
 
 		// Restore original costmap in case of failure
-		*costmap = costmap_backup;
+		// *costmap = costmap_backup;
 		return -1.0; // Indicate failure to find a path
 }
 
@@ -313,11 +240,15 @@ void findLongestPathWithObstacle(ros::NodeHandle& nh, costmap_2d::Costmap2D* cos
 								const Node& start_node, const Node& goal_node,
 								const std::vector<geometry_msgs::PoseStamped>& original_path, double obstacle_size, std::string obstacle_model_name)
 {
+		ROS_INFO("Start node: (%d, %d), Goal node: (%d, %d)", start_node.x_, start_node.y_, goal_node.x_, goal_node.y_);
+
 		double max_path_length = -1.0;
 		geometry_msgs::Point best_obstacle_position;
 
-		for (const auto& pose : original_path)
-		{
+		int distance_buffer = 25;
+		for (auto it = std::next(original_path.begin(), distance_buffer); it != std::prev(original_path.end(), distance_buffer); ++it) {
+    			const auto& pose = *it;
+
 				double obstacle_x = pose.pose.position.x;
 				double obstacle_y = pose.pose.position.y;
 
@@ -343,6 +274,13 @@ void findLongestPathWithObstacle(ros::NodeHandle& nh, costmap_2d::Costmap2D* cos
 		}
 }
 
+// Wrapper function to be called by the thread
+void findLongestPathWithObstacleThread(ros::NodeHandle& nh, costmap_2d::Costmap2D* costmap, global_planner::GlobalPlanner* planner,
+                                       Node start_node, Node goal_node,
+                                       std::vector<geometry_msgs::PoseStamped> original_path, double obstacle_size, std::string obstacle_model_name)
+{
+    findLongestPathWithObstacle(nh, costmap, planner, start_node, goal_node, original_path, obstacle_size, obstacle_model_name);
+}
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -617,12 +555,18 @@ bool GraphPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geome
 		ROS_ERROR("Failed to get a path.");
 
 	/////////////////////////////////////////////////////////////////////////////
-	double original_path_length = calculatePathLength(path);
+	// double original_path_length = calculatePathLength(path);
 
 	if (!isSameGoal(goal, last_goal))
 	{
-		// std::thread thread_obj(findLongestPathWithObstacle, std::ref(nh), std::ref(costmap_), std::ref(g_planner_), std::cref(start_node), std::cref(goal_node), std::cref(plan), std::ref(obstacle_size), std::ref(obstacle_model_name));
-		findLongestPathWithObstacle(nh, costmap_, g_planner_, start_node, goal_node, plan, obstacle_size, obstacle_model_name);
+		// Create a thread to run the findLongestPathWithObstacle function
+		std::thread obstacle_thread(findLongestPathWithObstacleThread, std::ref(nh), costmap_, g_planner_,
+									start_node, goal_node, plan, obstacle_size, obstacle_model_name);
+
+		// Detach the thread so that it runs independently
+		obstacle_thread.detach();
+
+		// findLongestPathWithObstacle(nh, costmap_, g_planner_, start_node, goal_node, plan, obstacle_size, obstacle_model_name);
 		last_goal = goal;
 	}
 	/////////////////////////////////////////////////////////////////////////////
