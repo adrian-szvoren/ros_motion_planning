@@ -546,15 +546,15 @@ bool GraphPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geome
 		ROS_ERROR("Failed to get a path.");
 
 	/////////////////////////////////////////////////////////////////////////////
-	// if (!isSameGoal(goal, last_goal))
-	// {
-	// 	// Create a thread to run the findLongestPathWithObstacle function
-	// 	std::thread obstacle_thread(findLongestPathWithObstacleThread, std::ref(nh), costmap_, g_planner_,
-	// 								start_node, goal_node, plan, obstacle_size, obstacle_model_name);
-	// 	// Detach the thread so that it runs independently
-	// 	obstacle_thread.detach();
-	// 	last_goal = goal;
-	// }
+	if (!isSameGoal(goal, last_goal))
+	{
+		// Create a thread to run the findLongestPathWithObstacle function
+		std::thread obstacle_thread(findLongestPathWithObstacleThread, std::ref(nh), costmap_, g_planner_,
+									start_node, goal_node, plan, obstacle_size, obstacle_model_name);
+		// Detach the thread so that it runs independently
+		obstacle_thread.detach();
+		last_goal = goal;
+	}
 	/////////////////////////////////////////////////////////////////////////////
 
 	// publish expand zone
