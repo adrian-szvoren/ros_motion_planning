@@ -1,5 +1,5 @@
 # Send planing goal
-rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped "{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 4.5, y: -9.0, z: 0.0}, orientation: {w: 1.0}}}"
+rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped "{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 0.0, y: 9.0, z: 0.0}, orientation: {w: 1.0}}}"
 
 # Reset robot position
 # rostopic pub /gazebo/set_entity_state gazebo_msgs/SetEntityState "state: {name: robot1, pose: {position: {x: 0.0, y: 0.0, z: 0.0}}, reference_frame: world}"
